@@ -1,0 +1,77 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+	<!-- Version: 1.0 -->
+	<head>
+		<meta charset="utf-8" />
+		<title>DND TEST</title>		
+		<link rel='stylesheet' href='reset.css' />
+		<script src='http://code.jquery.com/jquery-1.11.0.min.js'></script>
+		<script src='../dnd.js'></script>
+		<style>
+			#MAIN {
+				position: absolute;
+				width: 800px;
+				height: 500px;
+				border: 1px solid black;
+			}
+			#small-holder {
+				position: absolute;
+				top: 20px;
+				left: 50px;
+				width: 90px;
+				height: 240px;
+				border: 1px solid blue;
+				-webkit-transform: scale(0.75);
+				-moz-transform: scale(0.75);
+				-ms-transform: scale(0.75);
+				-o-transform: scale(0.75);
+				transform: scale(0.75);
+			}
+			#big-holder {
+				position: absolute;
+				top: 70px;
+				left: 500px;
+				width: 90px;
+				height: 240px;
+				border: 1px solid red;
+				-webkit-transform: scale(1.3);
+				-moz-transform: scale(1.3);
+				-ms-transform: scale(1.3);
+				-o-transform: scale(1.3);
+				transform: scale(1.3);
+			}
+			.drag-starters {
+				margin-top: 20px;
+				margin-left: 20px;
+				width: 50px;
+				height: 50px;
+				background-color: green;
+				border: 1px solid black;
+				text-align: center;
+				cursor: pointer;
+			}
+		</style>
+	</head>
+
+	<body>
+		<section id="MAIN">
+			<div id="small-holder">
+				<div id="d0" class="drag-starters">000</div>
+				<div id="d1" class="drag-starters">001</div>
+				<div id="d2" class="drag-starters">002</div>
+			</div>
+			<div id="big-holder"></div>
+		</section>
+		<script>
+			dnd.get('.drag-starters').initDraggable({
+				clone: true,
+				centralize: true,
+				revert: 500,
+				onCreate: function(){},
+				onStart: function(evt){},
+				onDrag: function(evt){},
+				onDrop: function(evt){}
+			});
+		</script>
+	</body>
+</html>
