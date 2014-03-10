@@ -1,7 +1,30 @@
 /** DND Version 1.0
 Developed by: André H. Oliva
 Copyright 2014
- */
+*/
+
+EventTarget.prototype.eventList = {};
+EventTarget.prototype.getListeners = function(){
+	return this.eventList[this.getAttribute('data-drag-id')] || [];
+};
+EventTarget.prototype.addTrackableListener = function(type, fn, capture){
+	var i = this.getAttribute('data-drag-id');
+	//console.log(fn.name);
+	if (typeof(this.eventList[i]) === 'undefined') this.eventList[i] = [];
+
+	if (this.eventList[i].indexOf(type) == -1) this.eventList[i].push(type);
+	this.addEventListener(type, fn, capture);
+};
+EventTarget.prototype.removeTrackableListener = function(type, fn, capture){
+	var i = this.getAttribute('data-drag-id');	
+	for(var o = 0; o < this.eventList[i].length; o++){
+		if(this.eventList[i][o] == type){
+			this.eventList[i].splice(o, 1);
+			o--;
+		}
+	}
+	this.removeEventListener(type, fn, capture);
+};
 
 window.dnd = (function () {		
 	var currentData;
@@ -53,7 +76,7 @@ window.dnd = (function () {
 			if(params.onCreate) params.onCreate();
 			
 			el.setAttribute('data-drag-id', dndCount);
-			el.addEventListener('mousedown', (params.clone) ? CreateClone : Grab);
+			el.addTrackableListener('mousedown', (params.clone) ? CreateClone : Grab);
 			el.addEventListener('touchstart', (params.clone) ? CreateClone : Grab);
 			el.addEventListener('touchend', Drop);
 			
@@ -63,9 +86,9 @@ window.dnd = (function () {
 	
 	DND.prototype.removeDraggable = function() {
 		return this.map(function(el){
-			el.removeEventListener('mousedown', CreateClone);
+			el.removeTrackableListener('mousedown', CreateClone);
 			el.removeEventListener('touchstart', CreateClone);
-			el.removeEventListener('mousedown', Grab);
+			el.removeTrackableListener('mousedown', Grab);
 			el.removeEventListener('touchstart', Grab);
 			el.removeEventListener('touchend', Drop);
 			delete configs[el.getAttribute('data-drag-id')];
@@ -167,7 +190,7 @@ window.dnd = (function () {
 		document.removeEventListener('mousemove', Drag);
 		document.removeEventListener('touchmove', Drag);
 		document.removeEventListener('mouseup', Drop);
-		currentData.originalElement.removeEventListener('touchend', Drop);
+		currentData.originalElement.removeTrackableListener('touchend', Drop);
 		
 		currentData.dragElement.style.display = 'none';
 		currentData.dropTarget = document.elementFromPoint(e.clientX, e.clientY);
@@ -248,8 +271,8 @@ window.dnd = (function () {
 		
 		d.dropTarget.appendChild(d.dragElement);
 		
-		if(d.clone){			
-			d.dragElement.addEventListener('mousedown', CreateClone);
+		if(d.clone && d.dropTarget.getListeners().indexOf('mousedown') == -1){
+			d.dragElement.addTrackableListener('mousedown', CreateClone);
 			d.dragElement.addEventListener('touchstart', CreateClone);
 			d.dragElement.addEventListener('touchend', Drop);
 			d.dragElement.className = d.originalElement.className;
