@@ -103,16 +103,17 @@ window.dnd = (function () {
 	//----------------------------------------------------------------------------Drag'n'drop control functions
 	function CreateClone(e){
 		e.preventDefault();
-		if (e.type == 'touchstart') e = e.touches[0];
-		
-		currentData = configs[e.target.getAttribute('data-drag-id')];
-		currentData.originalElement = e.target;
-		
+		if (e.type == 'touchstart') e = e.touches[0];		
+		var evtTarget = (e.target.getAttribute('data-drag-id') == null) ? findDraggableParent(e.target) : e.target;
+				
+		currentData = configs[evtTarget.getAttribute('data-drag-id')];
+		currentData.originalElement = evtTarget;
+				
 		var pos = (currentData.centralize) ? 
-			{ top: (e.clientY/scale) - (parseInt(window.getComputedStyle(e.target).height)/2), left: (e.clientX/scale) - (parseInt(window.getComputedStyle(e.target).width)/2) } : 
-			{ top: e.target.getBoundingClientRect().top, left: e.target.getBoundingClientRect().left } ;
+			{ top: (e.clientY/scale) - (parseInt(window.getComputedStyle(evtTarget).height)/2), left: (e.clientX/scale) - (parseInt(window.getComputedStyle(evtTarget).width)/2) } : 
+			{ top: evtTarget.getBoundingClientRect().top, left: evtTarget.getBoundingClientRect().left } ;
 		
-		var clone = e.target.cloneNode(true);	
+		var clone = evtTarget.cloneNode(true);	
 		clone.className += (clone.className) ? " cloned-piece" : "cloned-piece";
 		clone.style.position = 'absolute';
 		clone.style.top = pos.top + 'px';
@@ -121,7 +122,7 @@ window.dnd = (function () {
 		setCSSTransform(clone, 'translate(0px,0px)');
 		
 		currentData.parent.appendChild(clone);		
-		e.target.style.opacity = 0;		
+		evtTarget.style.opacity = 0;		
 		
 		Grab(e, clone);
 	};
@@ -130,10 +131,12 @@ window.dnd = (function () {
 		if (e.type == 'touchstart'){
 			e.preventDefault();
 			e = e.touches[0];
-		}		
-		currentData = configs[e.target.getAttribute('data-drag-id')];		
-		currentData.originalCoords = { x: e.target.getBoundingClientRect().left, y: e.target.getBoundingClientRect().top };
-		currentData.dragElement = target || e.target;
+		}
+		var evtTarget = (e.target.getAttribute('data-drag-id') == null) ? findDraggableParent(e.target) : e.target;
+		
+		currentData = configs[evtTarget.getAttribute('data-drag-id')];		
+		currentData.originalCoords = { x: evtTarget.getBoundingClientRect().left, y: evtTarget.getBoundingClientRect().top };
+		currentData.dragElement = target || evtTarget;
 		
 		if(currentData.onStart) {
 			currentData.onStart(e);
@@ -199,7 +202,7 @@ window.dnd = (function () {
 			d.dragElement.addEventListener('transitionend', TransitionEnd);
 			d.dragElement.addEventListener('webkitTransitionEnd', TransitionEnd);
 			d.dragElement.addEventListener('oTransitionEnd', TransitionEnd);
-		} else {		
+		} else {
 			setCSSTransform(d.dragElement, 'translate(0px,0px)');
 			TransitionEnd({target: d.dragElement});
 		}
@@ -261,6 +264,14 @@ window.dnd = (function () {
 		
 		if(callback) callback();
 	};
+	
+	//----------------------------------------------------------------------------Finding closest parent who is a valid drggable
+	function findDraggableParent(el) {
+		while (el.getAttribute('data-drag-id') == null){
+			el = el.parentNode;
+		}
+		return el
+	}
 	
 	//----------------------------------------------------------------------------Style setting helpers
 	function setCSSTransform(el, val) {
