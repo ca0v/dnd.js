@@ -108,6 +108,10 @@ window.dnd = (function () {
 				
 		currentData = configs[evtTarget.getAttribute('data-drag-id')];
 		currentData.originalElement = evtTarget;
+		
+		if(currentData.onStart) {
+			currentData.onStart(e);
+		}
 				
 		var pos = (currentData.centralize) ? 
 			{ top: (e.clientY/scale) - (parseInt(window.getComputedStyle(evtTarget).height)/2), left: (e.clientX/scale) - (parseInt(window.getComputedStyle(evtTarget).width)/2) } : 
@@ -138,7 +142,7 @@ window.dnd = (function () {
 		currentData.originalCoords = { x: evtTarget.getBoundingClientRect().left, y: evtTarget.getBoundingClientRect().top };
 		currentData.dragElement = target || evtTarget;
 		
-		if(currentData.onStart) {
+		if(!currentData.clone && currentData.onStart) {
 			currentData.onStart(e);
 		}
 		
