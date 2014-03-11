@@ -10,7 +10,7 @@ Installation:
 ------------
 Just add the dnd.js to your project and include it in your html.
 ```
-<script src=path/to/dnd.js></script>
+<script src="path/to/dnd.js"></script>
 ```
 
 How to use it:
