@@ -109,10 +109,6 @@ window.dnd = (function () {
 		currentData = configs[evtTarget.getAttribute('data-drag-id')];
 		currentData.originalElement = evtTarget;
 		
-		if(currentData.onStart) {
-			currentData.onStart(e);
-		}
-				
 		var pos = (currentData.centralize) ? 
 			{ top: (e.clientY/scale) - (parseInt(window.getComputedStyle(evtTarget).height)/2), left: (e.clientX/scale) - (parseInt(window.getComputedStyle(evtTarget).width)/2) } : 
 			{ top: evtTarget.getBoundingClientRect().top, left: evtTarget.getBoundingClientRect().left } ;
@@ -123,11 +119,15 @@ window.dnd = (function () {
 		clone.style.top = pos.top + 'px';
 		clone.style.left = pos.left + 'px';
 		clone.style.margin = '0px';
-		setCSSTransform(clone, 'translate(0px,0px)');
+		setCSSTransform(clone, 'translate(0px,0px)');		
+		currentData.parent.appendChild(clone);
+		currentData.dragElement = clone;
 		
-		currentData.parent.appendChild(clone);		
+		if(currentData.onStart) {
+			currentData.onStart(e);
+		}
+		
 		evtTarget.style.opacity = 0;		
-		
 		Grab(e, clone);
 	};
 	
