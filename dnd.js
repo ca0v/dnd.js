@@ -119,7 +119,6 @@ window.dnd = (function () {
 		clone.style.top = pos.top + 'px';
 		clone.style.left = pos.left + 'px';
 		clone.style.margin = '0px';
-		setCSSTransform(clone, 'translate(0px,0px)');		
 		currentData.parent.appendChild(clone);
 		currentData.dragElement = clone;
 		
@@ -231,8 +230,8 @@ window.dnd = (function () {
 	//-------------------------------------------------------------------------Place draggable at the drop point
 	function PlaceDrag(d, callback){
 		var newCoords = {		
-			x: parseInt(d.dragElement.style.transform.split('(').pop().split(',')[0]) * scale,
-			y: parseInt(d.dragElement.style.transform.split('(').pop().split(',')[1]) * scale
+			x: (d.dragElement.style.transform) ? parseInt(d.dragElement.style.transform.split('(').pop().split(',')[0]) * scale : 0,
+			y: (d.dragElement.style.transform) ? parseInt(d.dragElement.style.transform.split('(').pop().split(',')[1]) * scale : 0
 		}
 		
 		var st = window.getComputedStyle(d.dropTarget, null);
