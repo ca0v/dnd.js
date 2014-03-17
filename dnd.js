@@ -140,7 +140,7 @@ window.dnd = (function () {
 		currentData = configs[evtTarget.getAttribute('data-drag-id')];		
 		currentData.originalCoords = { x: evtTarget.getBoundingClientRect().left, y: evtTarget.getBoundingClientRect().top };
 		currentData.dragElement = target || evtTarget;
-		
+				
 		if(!currentData.clone && currentData.onStart) {
 			currentData.onStart(e);
 		}
@@ -159,6 +159,8 @@ window.dnd = (function () {
 		
 		var newX = (e.clientX / scale) - currentData.grabPoint.x;
 		var newY = (e.clientY / scale) - currentData.grabPoint.y;
+		newY += (newY == 0) ? 0.001 : 0;
+		
 		setCSSTransform(currentData.dragElement, 'translate(' + newX + 'px,' + newY + 'px)');	
 		
 		if(currentData.onDrag) {
