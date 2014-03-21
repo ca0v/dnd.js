@@ -109,22 +109,22 @@ window.dnd = (function () {
 		currentData = configs[evtTarget.getAttribute('data-drag-id')];
 		currentData.originalElement = evtTarget;
 		
-		var pos = (currentData.centralize) ? 
-			{ top: (e.clientY/scale) - (parseInt(window.getComputedStyle(evtTarget).height)/2), left: (e.clientX/scale) - (parseInt(window.getComputedStyle(evtTarget).width)/2) } : 
-			{ top: evtTarget.getBoundingClientRect().top, left: evtTarget.getBoundingClientRect().left } ;
-		
 		var clone = evtTarget.cloneNode(true);	
 		clone.className += (clone.className) ? " cloned-piece" : "cloned-piece";
 		clone.style.position = 'absolute';
-		clone.style.top = pos.top + 'px';
-		clone.style.left = pos.left + 'px';
-		clone.style.margin = '0px';
 		currentData.parent.appendChild(clone);
 		currentData.dragElement = clone;
 		
 		if(currentData.onStart) {
 			currentData.onStart(e);
 		}
+		
+		var pos = (currentData.centralize) ? 
+			{ top: (e.clientY/scale) - (parseInt(window.getComputedStyle(evtTarget).height)/2), left: (e.clientX/scale) - (parseInt(window.getComputedStyle(evtTarget).width)/2) } : 
+			{ top: evtTarget.getBoundingClientRect().top, left: evtTarget.getBoundingClientRect().left } ;
+		clone.style.top = pos.top + 'px';
+		clone.style.left = pos.left + 'px';
+		clone.style.margin = '0px';
 		
 		evtTarget.style.opacity = 0;		
 		Grab(e, clone);
