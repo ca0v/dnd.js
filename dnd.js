@@ -120,8 +120,9 @@ window.dnd = (function () {
 		}
 		
 		var pos = (currentData.centralize) ? 
-			{ top: (e.clientY/scale) - (parseInt(window.getComputedStyle(evtTarget).height)/2), left: (e.clientX/scale) - (parseInt(window.getComputedStyle(evtTarget).width)/2) } : 
+			{ top: (e.clientY/scale) - (parseInt(window.getComputedStyle(currentData.dragElement).height)/2), left: (e.clientX/scale) - (parseInt(window.getComputedStyle(currentData.dragElement).width)/2) } : 
 			{ top: evtTarget.getBoundingClientRect().top, left: evtTarget.getBoundingClientRect().left } ;
+		
 		clone.style.top = pos.top + 'px';
 		clone.style.left = pos.left + 'px';
 		clone.style.margin = '0px';
