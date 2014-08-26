@@ -54,8 +54,8 @@ window.dnd = (function () {
 			
 			el.setAttribute('data-drag-id', dndCount);
 			el.addEventListener('mousedown', (params.clone) ? CreateClone : Grab);
-			el.addEventListener('touchstart', (params.clone) ? CreateClone : Grab);
-			el.addEventListener('touchend', Drop);
+			document.body.addEventListener('touchstart', CheckTouchTarget);
+			document.body.addEventListener('touchend', Drop);
 			
 			dndCount++;
 		});		
@@ -64,10 +64,9 @@ window.dnd = (function () {
 	DND.prototype.removeDraggable = function() {
 		return this.map(function(el){
 			el.removeEventListener('mousedown', CreateClone);
-			el.removeEventListener('touchstart', CreateClone);
 			el.removeEventListener('mousedown', Grab);
-			el.removeEventListener('touchstart', Grab);
-			el.removeEventListener('touchend', Drop);
+			document.body.removeEventListener('touchstart', CheckTouchTarget);
+			document.body.removeEventListener('touchend', Drop);
 			delete configs[el.getAttribute('data-drag-id')];
 			el.removeAttribute('data-drag-id');
 		});
@@ -99,6 +98,15 @@ window.dnd = (function () {
 			}
 		});
 	}
+
+	//----------------------------------------------------------------------------Touch functions
+	function CheckTouchTarget(e){
+		var tgt = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+		if (tgt.hasAttribute('data-drag-id') && tgt.className.search('cloned-piece') == -1){
+			e.preventDefault();			
+			(configs[tgt.getAttribute('data-drag-id')].clone) ? CreateClone(e) : Grab(e);
+		}
+	}
 	
 	//----------------------------------------------------------------------------Drag'n'drop control functions
 	function CreateClone(e){
@@ -121,21 +129,25 @@ window.dnd = (function () {
 		
 		var pos = (currentData.centralize) ? 
 			{ top: (e.clientY/scale) - (parseInt(window.getComputedStyle(currentData.dragElement).height)/2), left: (e.clientX/scale) - (parseInt(window.getComputedStyle(currentData.dragElement).width)/2) } : 
-			{ top: evtTarget.getBoundingClientRect().top, left: evtTarget.getBoundingClientRect().left } ;
+			{ top: evtTarget.getBoundingClientRect().top/scale, left: evtTarget.getBoundingClientRect().left/scale } ;
 		
+		pos.top -= currentData.parent.getBoundingClientRect().top/scale;
+		pos.left -= currentData.parent.getBoundingClientRect().left/scale;
+
 		clone.style.top = pos.top + 'px';
 		clone.style.left = pos.left + 'px';
 		clone.style.margin = '0px';
+		clone.style.zIndex = 10000000;
 		
 		evtTarget.style.opacity = 0;		
 		Grab(e, clone);
 	};
 	
-	function Grab(e, target){
+	function Grab(e, target){		
 		if (e.type == 'touchstart'){
 			e.preventDefault();
 			e = e.touches[0];
-		}
+		} 
 		var evtTarget = (e.target.getAttribute('data-drag-id') == null) ? findDraggableParent(e.target) : e.target;
 		
 		currentData = configs[evtTarget.getAttribute('data-drag-id')];		
@@ -151,18 +163,18 @@ window.dnd = (function () {
 		
 		document.addEventListener('mouseup', Drop);
 		document.addEventListener('mousemove', Drag);
-		document.addEventListener('touchmove', Drag);
+		document.body.addEventListener('touchmove', Drag);
 	};
 	
 	function Drag(e){
 		e.preventDefault();
 		if (e.type == 'touchmove') e = e.changedTouches[0];
 		
-		var newX = (e.clientX / scale) - currentData.grabPoint.x;
-		var newY = (e.clientY / scale) - currentData.grabPoint.y;
-		newY += (newY == 0) ? 0.001 : 0;
+		currentData.x = (e.clientX / scale) - currentData.grabPoint.x;
+		currentData.y = (e.clientY / scale) - currentData.grabPoint.y;
+		currentData.y += (currentData.y == 0) ? 0.001 : 0;
 		
-		setCSSTransform(currentData.dragElement, 'translate(' + newX + 'px,' + newY + 'px)');	
+		setCSSTransform(currentData.dragElement, 'translate(' + currentData.x + 'px,' + currentData.y + 'px)');	
 		
 		if(currentData.onDrag) {
 			currentData.onDrag(e);
@@ -170,13 +182,13 @@ window.dnd = (function () {
 	};
 	
 	function Drop(e){
+		if(!currentData || !currentData.dragElement) return false;
 		e.preventDefault();
 		if (e.type == 'touchend') e = e.changedTouches[0];
 		
 		document.removeEventListener('mousemove', Drag);
-		document.removeEventListener('touchmove', Drag);
 		document.removeEventListener('mouseup', Drop);
-		currentData.originalElement.removeEventListener('touchend', Drop);
+		document.body.removeEventListener('touchmove', Drag);
 		
 		currentData.dragElement.style.display = 'none';
 		currentData.dropTarget = document.elementFromPoint(e.clientX, e.clientY);
@@ -187,47 +199,49 @@ window.dnd = (function () {
 			currentData.dropTarget = currentData.originalElement.parentNode;
 		
 		if(currentData.onDrop){
-			if(currentData.onDrop(e)) return;
+			if(currentData.onDrop(e)){
+				currentData = null;
+				return;
+			}
 		}	
 		
 		if (currentData.revert >= 0) RevertDrag(currentData);
 		else PlaceDrag(currentData);
+
+		currentData = null;
 	};
 	
 	//----------------------------------------------------------------------------Revert draggable to initial point
 	function RevertDrag(d, callback){
-		d.dragElement.style.top = d.originalCoords.y / scale + 'px';
-		d.dragElement.style.left = d.originalCoords.x / scale + 'px';
-		
-		if (d.revert > 0){
-			var str = (d.revert/1000) + "s";
-			setCSSTransition(d.dragElement, str);		
-			setTimeout(function(){setCSSTransform(d.dragElement, 'translate(0px,0px)')}, 1);
-			
-			d.revertCallback = callback;
-			d.dragElement.addEventListener('transitionend', TransitionEnd);
-			d.dragElement.addEventListener('webkitTransitionEnd', TransitionEnd);
-			d.dragElement.addEventListener('oTransitionEnd', TransitionEnd);
-		} else {
-			setCSSTransform(d.dragElement, 'translate(0px,0px)');
-			TransitionEnd({target: d.dragElement});
-		}
+		if (!d.dragElement) return false
+		d.revertCallback = callback;
+
+		var time = d.revert;
+		var m = d.y / d.x;
+		var tx = d.x / time;
+
+		d.revertInterval = setInterval(function(){
+			if (time == 0){
+				setCSSTransform(d.dragElement, 'translate(0px,0px)');		
+				clearInterval(d.revertInterval);
+				TransitionEnd({target: d.dragElement});
+				return
+			}
+
+			time --;
+			var cx = tx * time;
+			var cy = cx * m;
+			setCSSTransform(d.dragElement, 'translate('+ cx +'px, '+ cy +'px)');
+		}, 10);
 	};	
 	function TransitionEnd(e){
-		e.target.removeEventListener('transitionend', TransitionEnd);
-		e.target.removeEventListener('webkitTransitionEnd', TransitionEnd);
-		e.target.removeEventListener('oTransitionEnd', TransitionEnd);
-		
-		var d = configs[e.target.getAttribute('data-drag-id')];			
+		var d = configs[e.target.getAttribute('data-drag-id')];
 		if (d.clone){
-			d.originalElement.style.opacity = 1;
 			d.dragElement.parentNode.removeChild(d.dragElement);
-		} else {
-			setCSSTransition(d.dragElement, 'none');	
-		}
-		
+			d.dragElement = null;
+			d.originalElement.style.opacity = 1;
+		}		
 		if(d.revertCallback) d.revertCallback();
-		d.dragElement = null;
 	};
 	
 	//-------------------------------------------------------------------------Place draggable at the drop point
@@ -262,8 +276,6 @@ window.dnd = (function () {
 		
 		if(d.clone){
 			d.dragElement.addEventListener('mousedown', CreateClone);
-			d.dragElement.addEventListener('touchstart', CreateClone);
-			d.dragElement.addEventListener('touchend', Drop);
 			d.dragElement.className = d.originalElement.className;
 			d.originalElement.parentNode.removeChild(d.originalElement);
 		}
@@ -286,13 +298,6 @@ window.dnd = (function () {
 		el.style.mozTransform = val;
 		el.style.msTransform = val;
 		el.style.oTransform = val;
-	};	
-	function setCSSTransition(el, val) {
-		el.style.transition = val;
-		el.style.webkitTransition = val;
-		el.style.mozTransition = val;
-		el.style.msTransition = val;
-		el.style.oTransition = val;
 	};
 	
 	//----------------------------------------------------------------------------Library object
