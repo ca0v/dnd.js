@@ -53,6 +53,10 @@ window.dnd = (function () {
 			if(params.onCreate) params.onCreate();
 			
 			el.setAttribute('data-drag-id', dndCount);
+			var list = el.getElementsByTagName('*');
+			for (var i = 0; i < list.length; i++){
+				list[i].setAttribute('data-drag-child', true);
+			}
 			el.addEventListener('mousedown', (params.clone) ? CreateClone : Grab);
 			document.body.addEventListener('touchstart', CheckTouchTarget);
 			document.body.addEventListener('touchend', Drop);
@@ -102,8 +106,9 @@ window.dnd = (function () {
 	//----------------------------------------------------------------------------Touch functions
 	function CheckTouchTarget(e){
 		var tgt = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-		if (tgt.hasAttribute('data-drag-id') && tgt.className.search('cloned-piece') == -1){
-			e.preventDefault();			
+		if ((tgt.hasAttribute('data-drag-id') || tgt.hasAttribute('data-drag-child')) && tgt.className.search('cloned-piece') == -1){
+			e.preventDefault();
+			tgt = (tgt.getAttribute('data-drag-id') === null) ? findDraggableParent(tgt) : tgt;
 			(configs[tgt.getAttribute('data-drag-id')].clone) ? CreateClone(e) : Grab(e);
 		}
 	}
@@ -317,7 +322,7 @@ window.dnd = (function () {
 		el.style.mozTransform = val;
 		el.style.msTransform = val;
 		el.style.oTransform = val;
-	};
+	}
 	
 	//----------------------------------------------------------------------------Library object
     var dnd = {
