@@ -243,7 +243,7 @@ window.dnd = (function () {
 		var tx = d.x / time;
 
 		d.revertInterval = setInterval(function(){
-			if (time == 0){
+			if (time <= 0){
 				setCSSTransform(d.dragElement, 'translate(0px,0px)');		
 				clearInterval(d.revertInterval);
 				TransitionEnd(d);
