@@ -44,8 +44,8 @@ window.dnd = (function () {
 				clone: 				(typeof(params.clone) !== 'undefined') ? params.clone : false,
 				revert: 			(typeof(params.revert) !== 'undefined') ? params.revert : -1,		
 				originalElement:	el,
-				originalCoords: 	{ x: el.getBoundingClientRect().left, y: el.getBoundingClientRect().top },
-				grabPoint: 			{ x: 0, y: 0 },
+				originalCoords: 	{ },
+				grabPoint: 			{ },
 				dragElement: 		null,
 				dropTarget: 		null
 			};
@@ -127,12 +127,24 @@ window.dnd = (function () {
 			currentData.onStart(e);
 		}
 		
-		var pos = (currentData.centralize) ? 
-			{ top: (e.clientY/scale) - (parseInt(window.getComputedStyle(currentData.dragElement).height)/2), left: (e.clientX/scale) - (parseInt(window.getComputedStyle(currentData.dragElement).width)/2) } : 
-			{ top: evtTarget.getBoundingClientRect().top/scale, left: evtTarget.getBoundingClientRect().left/scale } ;
-		
-		pos.top -= currentData.parent.getBoundingClientRect().top/scale;
-		pos.left -= currentData.parent.getBoundingClientRect().left/scale;
+		var bcr = evtTarget.getBoundingClientRect();
+		var pos = { top: bcr.top/scale, left: bcr.left/scale };		
+		bcr = currentData.parent.getBoundingClientRect();
+		pos.top -= bcr.top/scale;
+		pos.left -= bcr.left/scale;
+
+		if (currentData.centralize){
+			var cs = window.getComputedStyle(currentData.dragElement);
+			var centerX = parseInt(cs.width)/2;
+			var centerY = parseInt(cs.height)/2;
+
+			currentData.grabPoint.x = pos.left + centerX;
+			currentData.grabPoint.y = pos.top + centerY;
+
+			centerX = - pos.left + ((e.clientX/scale) - centerX);
+			centerY = - pos.top + ((e.clientY/scale) - centerY);
+			setCSSTransform(clone, 'translate(' + centerX + 'px,' + centerY + 'px)');
+		}
 
 		clone.style.top = pos.top + 'px';
 		clone.style.left = pos.left + 'px';
@@ -153,13 +165,15 @@ window.dnd = (function () {
 		currentData = configs[evtTarget.getAttribute('data-drag-id')];		
 		currentData.originalCoords = { x: evtTarget.getBoundingClientRect().left, y: evtTarget.getBoundingClientRect().top };
 		currentData.dragElement = target || evtTarget;
+
+		currentData.x = currentData.y = 0;
 				
 		if(!currentData.clone && currentData.onStart) {
 			currentData.onStart(e);
 		}
 		
-		currentData.grabPoint.x = e.clientX / scale;
-		currentData.grabPoint.y = e.clientY / scale;		
+		currentData.grabPoint.x = currentData.grabPoint.x || e.clientX / scale;
+		currentData.grabPoint.y = currentData.grabPoint.y || e.clientY / scale;
 		
 		document.addEventListener('mouseup', Drop);
 		document.addEventListener('mousemove', Drag);
@@ -193,7 +207,7 @@ window.dnd = (function () {
 		currentData.dragElement.style.display = 'none';
 		currentData.dropTarget = document.elementFromPoint(e.clientX, e.clientY);
 		currentData.dragElement.style.display = 'block';
-		currentData.grabPoint = { x : 0, y : 0 };
+		currentData.grabPoint = { };
 		
 		if (currentData.dropTarget == currentData.originalElement)
 			currentData.dropTarget = currentData.originalElement.parentNode;
@@ -216,7 +230,7 @@ window.dnd = (function () {
 		if (!d.dragElement) return false
 		d.revertCallback = callback;
 
-		var time = d.revert;
+		var time = d.revert / 20;
 		var m = d.y / d.x;
 		var tx = d.x / time;
 
@@ -283,7 +297,7 @@ window.dnd = (function () {
 		if(callback) callback();
 	};
 	
-	//----------------------------------------------------------------------------Finding closest parent who is a valid drggable
+	//----------------------------------------------------------------------------Finding closest parent who is a valid draggable
 	function findDraggableParent(el) {
 		while (el.getAttribute('data-drag-id') == null){
 			el = el.parentNode;
