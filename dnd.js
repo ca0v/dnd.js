@@ -112,10 +112,12 @@ window.dnd = (function () {
 	function CreateClone(e){
 		e.preventDefault();
 		if (e.type == 'touchstart') e = e.touches[0];		
-		var evtTarget = (e.target.getAttribute('data-drag-id') == null) ? findDraggableParent(e.target) : e.target;
-				
+		var evtTarget = (e.target.getAttribute('data-drag-id') == null) ? findDraggableParent(e.target) : e.target;			
+		if (eval(evtTarget.getAttribute('data-drag-disabled'))) return false;
+
 		currentData = configs[evtTarget.getAttribute('data-drag-id')];
 		currentData.originalElement = evtTarget;
+		currentData.originalElement.setAttribute('data-drag-disabled', true);
 		
 		var clone = evtTarget.cloneNode(true);	
 		clone.className += (clone.className) ? " cloned-piece" : "cloned-piece";
@@ -227,7 +229,8 @@ window.dnd = (function () {
 	
 	//----------------------------------------------------------------------------Revert draggable to initial point
 	function RevertDrag(d, callback){
-		if (!d.dragElement) return false
+		if (!d.dragElement || d.reverting) return false
+		d.reverting = true;
 		d.revertCallback = callback;
 
 		var time = d.revert / 20;
@@ -238,7 +241,7 @@ window.dnd = (function () {
 			if (time == 0){
 				setCSSTransform(d.dragElement, 'translate(0px,0px)');		
 				clearInterval(d.revertInterval);
-				TransitionEnd({target: d.dragElement});
+				TransitionEnd(d);
 				return
 			}
 
@@ -248,14 +251,15 @@ window.dnd = (function () {
 			setCSSTransform(d.dragElement, 'translate('+ cx +'px, '+ cy +'px)');
 		}, 10);
 	};	
-	function TransitionEnd(e){
-		var d = configs[e.target.getAttribute('data-drag-id')];
+	function TransitionEnd(d){
 		if (d.clone){
 			d.dragElement.parentNode.removeChild(d.dragElement);
 			d.dragElement = null;
 			d.originalElement.style.opacity = 1;
+			d.originalElement.removeAttribute('data-drag-disabled');
 		}		
 		if(d.revertCallback) d.revertCallback();
+		delete d.reverting
 	};
 	
 	//-------------------------------------------------------------------------Place draggable at the drop point
@@ -307,6 +311,7 @@ window.dnd = (function () {
 	
 	//----------------------------------------------------------------------------Style setting helpers
 	function setCSSTransform(el, val) {
+		if (!el) return false;
 		el.style.transform = val;
 		el.style.webkitTransform = val;
 		el.style.mozTransform = val;
