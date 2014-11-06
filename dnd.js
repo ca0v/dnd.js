@@ -69,8 +69,6 @@ window.dnd = (function () {
 		return this.map(function(el){
 			el.removeEventListener('mousedown', CreateClone);
 			el.removeEventListener('mousedown', Grab);
-			document.body.removeEventListener('touchstart', CheckTouchTarget);
-			document.body.removeEventListener('touchend', Drop);
 			delete configs[el.getAttribute('data-drag-id')];
 			el.removeAttribute('data-drag-id');
 		});
