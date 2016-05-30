@@ -1,0 +1,20 @@
+{
+  "name": "dnd.js",
+  "main": "dnd.js",
+  "homepage": "https://github.com/ca0v/dnd.js",
+  "authors": [
+    "coreyalix <coreyalix@hotmail.com>"
+  ],
+  "description": "",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "requirejs": "^2.2.0"
+  }
+}
